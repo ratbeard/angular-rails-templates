@@ -7,6 +7,8 @@ module AngularRailsTemplates
     config.angular_templates.ignore_prefix  = ['templates/']
     config.angular_templates.markups        = []
     config.angular_templates.htmlcompressor = false
+    config.angular_templates.include_svg    = false
+    config.angular_templates.root_dir       = nil # default value set in initializer block below
 
     config.before_configuration do |app|
       # try loading common markups
@@ -24,6 +26,9 @@ module AngularRailsTemplates
 
 
     initializer 'angular-rails-templates' do |app|
+      config.angular_templates.root_dir ||= app.root.join('app', 'assets')
+      config.angular_templates.root_dir = config.angular_templates.root_dir.to_s
+
       if app.config.assets
         require 'sprockets'
         require 'sprockets/engines' # load sprockets for Rails 3
@@ -49,8 +54,12 @@ module AngularRailsTemplates
           app.assets.register_engine ".#{ext}", mimeless_engine
         end
 
-        # This engine wraps the HTML into JS
+        # This engine wraps the HTML and optionally svg into JS
         app.assets.register_engine '.html', AngularRailsTemplates::Template
+
+        if app.config.angular_templates.include_svg
+          app.assets.register_engine '.svg', AngularRailsTemplates::Template
+        end
       end
 
       # Sprockets Cache Busting
